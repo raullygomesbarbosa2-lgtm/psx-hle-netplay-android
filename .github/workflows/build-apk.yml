@@ -32,8 +32,10 @@ jobs:
           npm install --legacy-peer-deps --no-audit --no-fund
           npm install --no-save --legacy-peer-deps --no-audit --no-fund @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
           npm run build
-          npx cap --config capacitor.config.json add android
-          npx cap --config capacitor.config.json sync android
+          rm -f capacitor.config.ts capacitor.config.js
+          test -f capacitor.config.json
+          npx cap add android
+          npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew --no-daemon assembleDebug
