@@ -28,8 +28,9 @@ jobs:
         env:
           PSX_APP_URL: https://psx-hle-netplay-android.onrender.com
         run: |
-          npm install --no-audit --no-fund
-          npm install --no-save --no-audit --no-fund @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
+          npm pkg set devDependencies.esbuild="^0.28.2"
+          npm install --legacy-peer-deps --no-audit --no-fund
+          npm install --no-save --legacy-peer-deps --no-audit --no-fund @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
           npm run build
           npx cap add android
           npx cap sync android
