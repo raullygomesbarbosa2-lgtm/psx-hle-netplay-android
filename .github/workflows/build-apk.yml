@@ -1,0 +1,43 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download project source
+        run: |
+          mkdir app
+          curl -L https://raw.githubusercontent.com/${{ github.repository }}/main/app-source.zip -o app-source.zip
+          unzip -oq app-source.zip -d app
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: android-actions/setup-android@v3
+      - name: Build web app and Android wrapper
+        working-directory: app
+        env:
+          PSX_APP_URL: https://psx-hle-netplay-android.onrender.com
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save --no-audit --no-fund @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
+          npm run build
+          npx cap add android
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+      - name: Publish APK release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: psx-hle-build-${{ github.run_number }}
+          name: PSX HLE APK build ${{ github.run_number }}
+          make_latest: true
+          files: app/android/app/build/outputs/apk/debug/app-debug.apk
