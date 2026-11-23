@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Native PS1 Android APK
 
 on:
   push:
@@ -12,41 +12,37 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Download project source
+      - name: Fetch native Android project
         run: |
-          mkdir app
-          curl -L https://raw.githubusercontent.com/${{ github.repository }}/main/app-source.zip -o app-source.zip
-          unzip -oq app-source.zip -d app
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
+          mkdir native
+          curl -fsS https://raw.githubusercontent.com/${{ github.repository }}/main/native-app.zip -o native-app.zip
+          unzip -oq native-app.zip -d native
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
       - uses: android-actions/setup-android@v3
         with:
           packages: platform-tools platforms;android-35 build-tools;35.0.0
-      - name: Build web app and Android wrapper
-        working-directory: app
-        env:
-          PSX_APP_URL: https://psx-hle-netplay-android.onrender.com
+      - name: Download official PlayStation core for Android ABIs
         run: |
-          npm pkg set devDependencies.esbuild="^0.28.2"
-          npm install --legacy-peer-deps --no-audit --no-fund
-          npm install --no-save --legacy-peer-deps --no-audit --no-fund @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
-          npm run build
-          rm -f capacitor.config.ts capacitor.config.js
-          test -f capacitor.config.json
-          npx cap add android
-          npx cap sync android
-          cd android
-          chmod +x gradlew
-          ./gradlew --no-daemon assembleDebug
+          mkdir -p native/app/src/main/jniLibs/arm64-v8a native/app/src/main/jniLibs/armeabi-v7a
+          curl -fsS https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/pcsx_rearmed_libretro_android.so.zip -o /tmp/pcsx-arm64.zip
+          curl -fsS https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/pcsx_rearmed_libretro_android.so.zip -o /tmp/pcsx-armv7.zip
+          unzip -oq /tmp/pcsx-arm64.zip -d native/app/src/main/jniLibs/arm64-v8a
+          unzip -oq /tmp/pcsx-armv7.zip -d native/app/src/main/jniLibs/armeabi-v7a
+          file native/app/src/main/jniLibs/arm64-v8a/pcsx_rearmed_libretro_android.so
+          file native/app/src/main/jniLibs/armeabi-v7a/pcsx_rearmed_libretro_android.so
+      - name: Build APK
+        working-directory: native
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
       - name: Publish APK release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: psx-hle-build-${{ github.run_number }}
-          name: PSX HLE APK build ${{ github.run_number }}
+          tag_name: psx-hle-native-build-${{ github.run_number }}
+          name: PSX HLE Native APK build ${{ github.run_number }}
           make_latest: true
-          files: app/android/app/build/outputs/apk/debug/app-debug.apk
+          files: native/app/build/outputs/apk/debug/app-debug.apk
