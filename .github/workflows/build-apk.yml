@@ -21,6 +21,8 @@ jobs:
         with:
           node-version: 22
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-35 build-tools;35.0.0
       - name: Build web app and Android wrapper
         working-directory: app
         env:
