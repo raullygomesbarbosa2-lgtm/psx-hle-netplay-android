@@ -15,7 +15,9 @@ jobs:
       - name: Fetch native Android project
         run: |
           mkdir native
-          curl -fsS https://raw.githubusercontent.com/${{ github.repository }}/main/native-app.zip -o native-app.zip
+          curl -fsS "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/native-app.zip" -o native-app.zip
+          echo "Project archive commit: ${{ github.sha }}"
+          unzip -p native-app.zip libretrodroid/src/main/cpp/audio.h | grep -F 'fifo/FifoBuffer.h'
           unzip -oq native-app.zip -d native
       - uses: actions/setup-java@v4
         with:
