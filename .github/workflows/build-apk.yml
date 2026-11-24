@@ -26,12 +26,11 @@ jobs:
           gradle-version: 8.9
       - uses: android-actions/setup-android@v3
         with:
-          packages: |
-            platform-tools
-            platforms;android-35
-            build-tools;35.0.0
-            ndk;27.2.12479018
-            cmake;3.22.1
+          packages: platform-tools platforms;android-35 build-tools;35.0.0
+      - name: Install native Android build tools
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager --install "ndk;27.2.12479018" "cmake;3.22.1"
       - name: Download official PlayStation core for Android ABIs
         run: |
           mkdir -p native/app/src/main/jniLibs/arm64-v8a native/app/src/main/jniLibs/armeabi-v7a
